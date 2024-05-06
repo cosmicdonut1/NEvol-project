@@ -7,7 +7,7 @@ from datetime import datetime
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, LogLevels, BoardIds
 from brainflow.data_filter import DataFilter
 
-def main():
+def simulate_data():
     BoardShim.enable_dev_board_logger()
 
     params = BrainFlowInputParams()
@@ -54,13 +54,11 @@ def main():
             "EXG Channel 6, EXG Channel 7, EXG Channel 8, EXG Channel 9, EXG Channel 10, EXG Channel 11, EXG Channel 12, "
             "EXG Channel 13, EXG Channel 14, EXG Channel 15, Accel Channel 0, Accel Channel 1, Accel Channel 2, Other, "
             "Other, Other, Other, Other, Other, Other, Analog Channel 0, Analog Channel 1, Analog Channel 2, Timestamp, Other, "
-            "Timestamp (Formatted)"
+            "Timestamp (Formatted)\n"
         )
 
         # File name
         file_name = 'simulated_stream_data.csv'
-
-
 
         # Convert DataFrame to string and append header
         accumulated_data_str = accumulated_data.to_csv(index=False, header=False)
@@ -75,6 +73,3 @@ def main():
 
         print('Full data has been saved to "{}".'.format(file_name))
         print('Session ended.')
-
-if __name__ == "__main__":
-    main()
