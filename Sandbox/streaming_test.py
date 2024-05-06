@@ -21,8 +21,7 @@ def main():
 
     try:
         while True:
-            time.sleep(1)  # Delay for stability
-        
+            #time.sleep(1)  # Delay for stability
             data = board.get_current_board_data(256)  # Get current data from board
             df = pd.DataFrame(np.transpose(data))
 
