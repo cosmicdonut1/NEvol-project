@@ -1,0 +1,4 @@
+Terminology:
+batch - Locally stored signals (of a certain duration)
+chunk - Streaming signals from device (but accumulated as a chunk of particular size)
+stream - Real-time stream of signals (at a sample level)

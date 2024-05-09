@@ -1,4 +1,4 @@
-from utils.read_batch import read_recorded_data
+from utils.brainflow.read_batch import read_recorded_data
 import os
 
 # Insert the file name here and start the program
