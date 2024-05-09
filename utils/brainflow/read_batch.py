@@ -1,7 +1,7 @@
 import time
 import pandas as pd
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-
+from utils.denoise import algo_1
 
 def initialize_board(brainflow_input_params):
     board = BoardShim(BoardIds.CYTON_DAISY_BOARD.value, brainflow_input_params)
@@ -32,14 +32,18 @@ def fetch_data(file_path, file_type):
     return df
 
 
-def print_rows_in_intervals(df, sampling_rate):
-    num_intervals = len(df) // sampling_rate
+def retrieve_rows_in_intervals(df, sampling_rate):
+    num_intervals = 1 #len(df) // sampling_rate
 
     for interval in range(num_intervals):
         start_index = interval * sampling_rate
         end_index = start_index + sampling_rate
         #print("Rows from", start_index, "to", end_index - 1)
-        print(df.iloc[start_index:end_index].to_string(index=False))
+        # print(df.iloc[start_index:end_index].to_string(index=False))
+
+        df_denoised = algo_1(df.iloc[:, 1:9], start_index, end_index)
+        print(df_denoised)
+        # return df.iloc[start_index:end_index]
         time.sleep(1)  # Wait for 1 second before printing the next interval
 
 def read_recorded_data(file_path, file_type):
@@ -56,4 +60,4 @@ def read_recorded_data(file_path, file_type):
 
     num_seconds = len(df) / sampling_rate
     #print("Total seconds of data from the df: ", num_seconds)
-    print_rows_in_intervals(df, sampling_rate)
+    retrieve_rows_in_intervals(df, sampling_rate)
