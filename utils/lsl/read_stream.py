@@ -41,3 +41,6 @@ def read_stream():
     except KeyboardInterrupt:
         print("\nCtrl+C detected. Exiting gracefully...")
         sys.exit(0)
+
+if __name__ == "__main__":
+    read_stream()
