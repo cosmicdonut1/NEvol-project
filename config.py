@@ -2,7 +2,8 @@
 device_details = dict(
     id="UN-2023.04.61",
     sfreq=125,
-    total_channel_from_device = 17,
+    total_channels_from_device = 17,
+    relevant_channels_from_device = 8,
     channels=["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"],
 )
 epoch_information = dict(
@@ -13,7 +14,9 @@ epoch_information = dict(
 task_details = dict(
     # task="motor_imagery",
     # task="eyeblink",
-    task="motor_imagery",
+    task="bandpower",
+    bandpower_reference_channels=['Fz', 'Cz', 'Pz'],
+    eyeblink_eog_channel = 'Fz',
     mode="train"
 )
 
@@ -21,7 +24,8 @@ task_details = dict(
 # device_details = dict(
 #     id="UN-2023.04.61",
 #     sfreq=125,
-#     total_channel_from_device = 17,
+#     total_channels_from_device = 17,
+#     relevant_channels_from_device = 17,
 #     channels=["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"],
 # )
 # epoch_information = dict(

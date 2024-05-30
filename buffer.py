@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-
+import config
 
 class Buffer:
     def __init__(self, duration, sampling_rate, num_channels):
-        self.electrodes = 8
+        self.electrodes = config.device_details['relevant_channels_from_device']
         self.duration = duration
         self.sampling_rate = sampling_rate
         self.buffer_size = int(duration * sampling_rate)

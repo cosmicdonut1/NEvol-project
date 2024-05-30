@@ -83,8 +83,8 @@ def read_signal_stream(device_name, buffer, stop_event, save_interval=2, save_pa
             # sample, timestamp = inlet.pull_chunk()
 
             if timestamp_signal:
-                print("signal stream receiving data...")
-                print("Signal Received:\n", sample, "\nSignal Timestamp:", timestamp_signal)
+                # print("signal stream receiving data...")
+                # print("Signal Received:\n", sample, "\nSignal Timestamp:", timestamp_signal)
 
                 # print("Now saving to buffer...")
                 buffer.add_sample(sample=sample, timestamp=timestamp_signal)

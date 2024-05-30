@@ -7,7 +7,7 @@ import time
 import numpy as np
 # import pandas as pd
 from plot import plotEEGData
-from analyze import analyze_signal, classify_eyeblinks, process_imagery_data
+from analyze import analyze_bandpower, classify_eyeblinks, process_imagery_data
 import config
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     epoch_duration = config.epoch_information['duration']
     sampling_rate = config.device_details['sfreq']
     channel_names = config.device_details['channels']
-    all_channels = config.device_details['total_channel_from_device']
+    all_channels = config.device_details['total_channels_from_device']
     device_id = config.device_details['id']
 
     # ls_markers = []
@@ -57,7 +57,7 @@ if __name__ == "__main__":
             df_buffer = buffer.get_plottable_data(channel_names)
             print(df_buffer)
             if df_buffer[channel_names].to_numpy().any():
-                analyze_signal('bandpower', df_buffer, channel_names)
+                analyze_bandpower(df_buffer, channel_names, )
             time.sleep(epoch_duration)
 
     if config.task_details['task'] == "motor_imagery":
