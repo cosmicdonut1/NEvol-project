@@ -4,8 +4,9 @@ import math
 import threading
 import time
 
-parameters_file = r'parameters.txt'
+parameters_file = r'D:\Code\NEvol_git\Sandbox\Interaction_with_visualisation\parameters.txt'  # Путь к файлу параметров
 
+# Глобальные переменные для хранения состояния
 external_params = {
     'is_moving': False,
     'is_rotating_left': False,
@@ -21,22 +22,38 @@ def read_external_parameters():
                 external_params['is_moving'] = params[0] == 'True'
                 external_params['is_rotating_left'] = params[1] == 'True'
                 external_params['is_rotating_right'] = params[2] == 'True'
-        time.sleep(0.5)
+        time.sleep(0.5)  # Чтение параметров каждые 0.5 секунды
 
 def move_object():
     obj = bpy.context.object
     if obj is None:
-        return 0.1
+        return 0.1  # Продолжать
 
     forward_speed = 0.04
-    turn_radius = 2.0
+    rotation_angle = math.radians(15)  # Угол поворота - 15 градусов
 
     # Если объект движется вперед
     if external_params['is_moving']:
         direction = obj.matrix_world.to_quaternion() @ mathutils.Vector((0.0, -forward_speed, 0.0))
         obj.location += direction
 
-    return 0.1
+    # Если объект поворачивается влево
+    if external_params['is_rotating_left']:
+        obj.rotation_euler.z += rotation_angle
+        external_params['is_rotating_left'] = False
+        update_parameters_file()
+
+    # Если объект поворачивается вправо
+    if external_params['is_rotating_right']:
+        obj.rotation_euler.z -= rotation_angle
+        external_params['is_rotating_right'] = False
+        update_parameters_file()
+
+    return 0.1  # Повторять каждые 0.1 секунды
+
+def update_parameters_file():
+    with open(parameters_file, 'w') as f:
+        f.write(f"{external_params['is_moving']},{external_params['is_rotating_left']},{external_params['is_rotating_right']}")
 
 def register():
     bpy.utils.register_class(OBJECT_OT_move_and_rotate)

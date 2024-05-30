@@ -2,6 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 import mne
+import time
 
 import matplotlib.pyplot as plt
 from utils import load_task_markers, load_buffers
@@ -24,13 +25,18 @@ from mne.decoding import Vectorizer
 
 channel_mapping = {0: 'Fz', 1: 'C3', 2: 'Cz', 3: 'C4', 4: 'Pz', 5: 'PO7', 6: 'Oz', 7: 'PO8'}
 
+parameters_file = r'D:\Code\NEvol_git\Sandbox\Interaction_with_visualisation\parameters.txt'
+is_moving = False
+is_rotating_left = False
+is_rotating_right = False
 
-def create_power_table(spectrum, band_name, channel_names):
+
+def create_power_table(spectrum, band_name, channel_names, reference_channels):
     ls_spectrum = spectrum.get_data().reshape(4, 8)
-    df = pd.DataFrame(ls_spectrum, columns=[f'Channel_{i}' for i in range(1, 9)])
+    df = pd.DataFrame(ls_spectrum, columns=[f'Channel_{i}' for i in range(1, len(channel_names)+1)])
     df.columns = channel_names
     print(band_name, "\n")
-    print("Average Fz: ", df['Fz'].mean(),"\nAverage Cz: ", df['Cz'].mean(),"\nAverage Pz :", df['Pz'].mean())
+    print("Average ",reference_channels[0], ": ", df[reference_channels[0]].mean(), "\nAverage ", reference_channels[0], ": ", df[reference_channels[1]].mean(), "\nAverage ",reference_channels[2], ":", df[reference_channels[2]].mean())
     print("--------------------------------------------------------------------------")
 
 
@@ -46,7 +52,7 @@ def analyze_signal(mode, df_buffer, channel_names):
         info = mne.create_info(
             ch_names=channel_names,
             sfreq=125.0,  # Assuming the data is sampled at 1 Hz; adjust as necessary
-            ch_types=['eeg'] * 8
+            ch_types=['eeg'] * len(channel_names)
         )
 
         # Create Raw object
@@ -82,6 +88,11 @@ def analyze_signal(mode, df_buffer, channel_names):
         # write a for loop on theta and derived a table with columns (Epoch_number, band = theta, Fz, Pz and Cz), the table should contain values from theta_spectrum
 
         # -------------
+
+
+def write_parameters(is_moving, is_rotating_left, is_rotating_right):
+    with open(parameters_file, 'w') as f:
+        f.write(f"{is_moving},{is_rotating_left},{is_rotating_right}")
 
 
 def process_imagery_data(channel_names):
@@ -199,7 +210,10 @@ def process_imagery_data(channel_names):
     print(f"Predicted label: {predicted_label[0]}, Actual label: {actual_label}")
 
 
-def classify_eyeblinks(df_buffer, channel_names):
+def classify_eyeblinks(mode, df_buffer, channel_names):
+    global is_moving
+    global is_rotating_left
+    global is_rotating_right
     channel_data = df_buffer.iloc[:, :-1].values.T
     timestamps = pd.to_datetime(df_buffer['timestamp'])
 
@@ -208,7 +222,7 @@ def classify_eyeblinks(df_buffer, channel_names):
         sfreq=125.0,  # Assuming the data is sampled at 1 Hz; adjust as necessary
 
         # change this for different electrode configuration
-        ch_types=['eeg'] * 8
+        ch_types=['eeg'] * len(channel_names)
     )
 
     # Create Raw object
@@ -216,10 +230,13 @@ def classify_eyeblinks(df_buffer, channel_names):
     raw.set_montage('standard_1005')
     # raw.filter(l_freq=1.0, h_freq=40.0, fir_design='firwin')
 
+    reference_electrode = 'Fz'
+    # reference_electrode = 'Fp1'
+
     # Create EOG channel
     # Which channels must be selected for EOG detection
     # eog_channel = df_buffer.iloc[:, 0].values * 1e-6  # Convert µV to V
-    eog_channel = df_buffer['Fz'].values * 1e-6  # Convert µV to V
+    eog_channel = df_buffer[reference_electrode].values * 1e-6  # Convert µV to V
     eog_info = mne.create_info(['EOG'], sfreq=info['sfreq'], ch_types=['eog'])
     eog_raw = mne.io.RawArray(eog_channel[None, :], eog_info)
 
@@ -232,6 +249,26 @@ def classify_eyeblinks(df_buffer, channel_names):
     eog_events = eog_epochs.events
 
     print(eog_events)
+
+    ### --- SENDING THE COMMAND TO CONTROL VISUALISATION --- ###
+
+    control_parameter = len(eog_events)
+    print(control_parameter)
+
+    if control_parameter == 1:
+        is_moving = not is_moving
+        is_rotating_left = False
+        is_rotating_right = False
+    elif control_parameter == 2:
+        is_rotating_right = True
+        is_rotating_left = False
+    elif control_parameter == 3:
+        is_rotating_left = True
+        is_rotating_left = False
+
+    write_parameters(is_moving, is_rotating_left, is_rotating_right)
+
+    ### --- END OF SENDING THE COMMAND TO CONTROL VISUALISATION --- ###
     eog_events_df = pd.DataFrame(eog_events, columns=['sample', 'prev_event_id', 'event_id'])
 
     # Step 4: Visualize raw and filtered data with detected blinks
@@ -266,7 +303,7 @@ def classify_eyeblinks(df_buffer, channel_names):
     plt.subplots_adjust(hspace=0.5)
 
     # Display the plot with detected events
-    plt.show()
+    #plt.show()
 
 
         # ------------------------------------------------------------------------------
