@@ -13,7 +13,7 @@ ls_active_streams = []
 def check_stream(device_name):
     while True:
         # first resolve an EEG stream on the lab network
-        print("looking for an stream from...", device_name)
+        print("looking for a stream from...", device_name)
 
         try:
             streams = resolve_stream("name", device_name)
@@ -83,8 +83,8 @@ def read_signal_stream(device_name, buffer, stop_event, save_interval=2, save_pa
             # sample, timestamp = inlet.pull_chunk()
 
             if timestamp_signal:
-                # print("signal stream receiving data...")
-                # print("Signal Received:\n", sample, "\nSignal Timestamp:", timestamp_signal)
+                print("signal stream receiving data...")
+                print("Signal Received:\n", sample, "\nSignal Timestamp:", timestamp_signal)
 
                 # print("Now saving to buffer...")
                 buffer.add_sample(sample=sample, timestamp=timestamp_signal)

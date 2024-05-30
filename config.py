@@ -10,6 +10,13 @@ epoch_information = dict(
     duration=2,
 )
 
+task_details = dict(
+    # task="motor_imagery",
+    # task="eyeblink",
+    task="motor_imagery",
+    mode="train"
+)
+
 # Kseniia's OpenBCI
 # device_details = dict(
 #     id="UN-2023.04.61",
