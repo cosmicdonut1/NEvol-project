@@ -8,13 +8,13 @@ device_details = dict(
 )
 epoch_information = dict(
     # buffer size in seconds
-    duration=2,
+    duration=1,
 )
 
 task_details = dict(
-    # task="motor_imagery",
+    task="motor_imagery",
     # task="eyeblink",
-    task="bandpower",
+    # task="bandpower",
     bandpower_reference_channels=['Fz', 'Cz', 'Pz'],
     eyeblink_eog_channel = 'Fz',
     mode="train"

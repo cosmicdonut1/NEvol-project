@@ -13,7 +13,7 @@ ls_active_streams = []
 def check_stream(device_name):
     while True:
         # first resolve an EEG stream on the lab network
-        print("looking for a stream from...", device_name)
+        print("Waiting for stream...", device_name)
 
         try:
             streams = resolve_stream("name", device_name)
@@ -39,8 +39,8 @@ def read_task_stream(task_stream_name, ls_task_markers):
     try:
         while True:
             event_id, timestamp_markers = inlet_task.pull_sample()
-            print("task stream receiving data...")
-            print("Markers Received:\n", event_id, "\nTask Timestamp:", timestamp_markers)
+            # print("task stream receiving data...")
+            print("Marker Received: ", event_id, " | Marker Timestamp:", timestamp_markers)
 
             if timestamp_markers:
                 ls_task_markers.append([event_id, timestamp_markers])
@@ -55,25 +55,21 @@ def read_task_stream(task_stream_name, ls_task_markers):
 
                 # Save to a .npz file
                 np.savez('processed_data/task_data/task_markers.npz', event_ids=event_ids, timestamps=timestamps)
-                print("Annotations saved to annotations.npz")
+                print("Markers saved to processed_data/task_data/task_markers.npz")
                 break
 
     except Exception as e:
         print(f"Task stream encountered an error: {e}")
     finally:
-        print("closing task_stream")
+        print("Training Task Completed!")
         inlet_task.close_stream()
 
 
-def read_signal_stream(device_name, buffer, stop_event, save_interval=2, save_path="processed_data/signal_data"):
+def read_signal_stream(device_name, buffer, stop_event, save_path="processed_data/signal_data"):
     signal_stream = resolve_stream("name", device_name)
 
     # create a new inlet to read from the stream
     inlet_signal = StreamInlet(signal_stream[0])
-    # Ensure the save path exists
-    os.makedirs(save_path, exist_ok=True)
-
-    last_save_time = time.time()
 
     try:
         while not stop_event.is_set():
@@ -85,19 +81,7 @@ def read_signal_stream(device_name, buffer, stop_event, save_interval=2, save_pa
             if timestamp_signal:
                 # print("signal stream receiving data...")
                 # print("Signal Received:\n", sample, "\nSignal Timestamp:", timestamp_signal)
-
-                # print("Now saving to buffer...")
                 buffer.add_sample(sample=sample, timestamp=timestamp_signal)
-
-                # Save the buffer periodically
-                current_time = time.time()
-                if current_time - last_save_time >= save_interval:
-                    filename = os.path.join(save_path, f"buffer_{int(current_time)}.npz")
-                    buffer.save_buffer(filename)
-                    last_save_time = current_time
-                # print("-------------------Buffer print---------------------")
-                # buffer.print_buffer()
-                # buffer.print_buffer_shape()
 
     except Exception as e:
         print(f"Signal stream encountered an error: {e}")

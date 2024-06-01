@@ -8,6 +8,9 @@ import numpy as np
 # import pandas as pd
 from plot import plotEEGData
 from analyze import analyze_bandpower, classify_eyeblinks, process_imagery_data
+# import task
+
+from utils import clear_data_dumps
 import config
 
 if __name__ == "__main__":
@@ -29,6 +32,8 @@ if __name__ == "__main__":
 
     # Create an empty buffer for storage
     buffer = Buffer(duration=epoch_duration, sampling_rate=sampling_rate, num_channels=all_channels)
+    buffer.print_buffer_shape()
+
     stop_event = Event()
 
     bool_s_stream_status = check_stream(device_id)
@@ -63,26 +68,28 @@ if __name__ == "__main__":
     if config.task_details['task'] == "motor_imagery":
         print("Executing Motor Imagery | Mode = ", config.task_details['mode'])
         if config.task_details['mode'] == "train":
-            print("Trying to connect to task stream...")
+
             bool_m_stream_status = check_stream("task_stream")
             if bool_s_stream_status and bool_m_stream_status:
                 ls_markers = []
                 eeg_signals = np.zeros((len(channel_names), epoch_duration * sampling_rate))
+
+                clear_data_dumps("processed_data")
 
                 info = {'start_time': time.time()}
 
                 signal_thread = Thread(target=read_signal_stream, args=(device_id, buffer, stop_event))
                 signal_thread.start()
 
-                task_thread = Thread(target=read_task_stream, args=("task_stream", ls_markers))
-                task_thread.start()
-                task_thread.join()
+                read_task_thread = Thread(target=read_task_stream, args=("task_stream", ls_markers))
+                read_task_thread.start()
+                read_task_thread.join()
                 stop_event.set()
 
                 info['end_time'] = time.time()
 
                 print("Task Ended. Now preprocessing...")
-                process_imagery_data(channel_names)
+                # process_imagery_data(channel_names)
 
         elif config.task_details['mode'] == "predict":
             pass

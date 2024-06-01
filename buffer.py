@@ -1,31 +1,52 @@
 import numpy as np
 import pandas as pd
 import config
+import time
+import os
+
 
 class Buffer:
     def __init__(self, duration, sampling_rate, num_channels):
         self.electrodes = config.device_details['relevant_channels_from_device']
         self.duration = duration
+        self.num_channels = num_channels
         self.sampling_rate = sampling_rate
         self.buffer_size = int(duration * sampling_rate)
         self.buffer = np.zeros((self.buffer_size, num_channels))
         self.markers = np.array([])
         self.timestamps = np.zeros(self.buffer_size)
+        self.current_size = 0  # Track the current number of samples in the buffer
+        self.save_path = "processed_data/signal_data"
+
+        # Ensure the save path exists
+        os.makedirs(self.save_path, exist_ok=True)
 
     def add_sample(self, sample, timestamp):
-        self.buffer = np.roll(self.buffer, -1, axis=0)
-        self.buffer[-1] = sample
-
-        self.timestamps = np.roll(self.timestamps, -1, axis=0)
-        self.timestamps[-1] = timestamp
+        if self.current_size < self.buffer_size:
+            self.buffer[self.current_size] = sample
+            self.timestamps[self.current_size] = timestamp
+            self.current_size += 1
+        else:
+            # Save and clear the buffer when full
+            current_time = time.time()
+            filename = os.path.join(self.save_path, f"buffer_{int(current_time)}.npz")
+            self.save_buffer(filename)
+            self.clear_buffer()
+            # Add the new sample after clearing
+            self.buffer[0] = sample
+            self.timestamps[0] = timestamp
+            self.current_size = 1
 
     def save_buffer(self, filename):
         np.savez(filename, buffer=self.buffer, timestamps=self.timestamps)
-        print(f"Session Buffer saved to disk!")
+        self.print_buffer_shape()
+        print(f"Session Buffer saved to disk! Duration = ", self.timestamps[0], " to ", self.timestamps[-1])
 
     def clear_buffer(self):
         print("Clearing buffer...")
-        self.buffer = np.zeros((self.buffer_size, 17))
+        self.buffer = np.zeros((self.buffer_size, self.num_channels))
+        self.timestamps = np.zeros(self.buffer_size)
+        self.current_size = 0
 
     def get_buffer_data(self):
         return self.buffer

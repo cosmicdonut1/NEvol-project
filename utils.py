@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 import os
+import shutil
 
 from pylsl import local_clock
 import time
@@ -94,4 +95,21 @@ def load_buffers(folder_path):
     return df_buffers
 
 
+def clear_data_dumps(folderpath):
+    """
+    Remove all files in the specified folderpath and its subdirectories but keep the directories.
 
+    :param folderpath: Path to the folder to be cleared
+    """
+    print("Clearing the directory processed_data/...")
+
+    if not os.path.isdir(folderpath):
+        raise ValueError(f"The provided path '{folderpath}' is not a directory or does not exist.")
+
+    for root, dirs, files in os.walk(folderpath):
+        for file in files:
+            file_path = os.path.join(root, file)
+            try:
+                os.unlink(file_path)  # Remove the file
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")

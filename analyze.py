@@ -89,117 +89,143 @@ def write_parameters(is_moving, is_rotating_left, is_rotating_right):
 
 
 def process_imagery_data(channel_names):
-    # load the task and signal files stored in the disk
-    # Based on the task timestamps, subset the signals and annotate the events
-    # create epoch data that includes the signal and events
-    # use the epoch data to train a classifier
-    # save the classifier model as a pickle file for prediction later
 
-    # Load the .npz file for task
-    file_path = 'processed_data/task_data/task_markers.npz'  # Replace with your file path
-    df_tasks = load_task_markers(file_path)
+    # Work in Progress - Replace from epoching_logic.ipynb
 
-    # Load the .npz file for buffer
-    folder_path = 'processed_data/signal_data/'
-    df_buffers = load_buffers(folder_path)
-
-    print(df_buffers)
-    print("Task Ended. Now preprocessing...")
-
-    df_buffers = df_buffers.sort_values('timestamps').reset_index(drop=True)
-    df_tasks = df_tasks.sort_values('timestamps').reset_index(drop=True)
-
-    # Perform an as of merge to find the closest earlier and later event_id
-    df_buffers['prev_event_id'] = pd.merge_asof(df_buffers, df_tasks,
-                                                left_on='timestamps', right_on='timestamps',
-                                                direction='backward')['event_ids']
-
-    df_buffers['next_event_id'] = pd.merge_asof(df_buffers, df_tasks,
-                                                left_on='timestamps', right_on='timestamps',
-                                                direction='forward')['event_ids']
-
-    markers = {
-        'forward_start': [1],
-        'forward_end': [2],
-        'reverse_start': [3],
-        'reverse_end': [4],
-        'rest_start': [99],
-        'rest_end': [100],
-        'task_start': [-1],
-        'task_end': [-2]
-    }
-
-    def determine_phase(row):
-        if row['prev_event_id'] in markers['forward_start'] and row['next_event_id'] in markers['forward_end']:
-            return 'forward'
-        elif row['prev_event_id'] in markers['reverse_start'] and row['next_event_id'] in markers['reverse_end']:
-            return 'reverse'
-        elif row['prev_event_id'] in markers['rest_start'] and row['next_event_id'] in markers['rest_end']:
-            return 'rest'
-        else:
-            return 'unknown'
-
-    df_buffers['phase'] = df_buffers.apply(determine_phase, axis=1)
-
-    grouped = df_buffers.groupby(['epoch_number', 'phase']).size().reset_index(name='count')
-
-    valid_phases = ['forward', 'reverse', 'rest']
-    filtered_groups = grouped[(grouped['phase'].isin(valid_phases)) & (grouped['count'] == 250)]
-    mask = df_buffers.set_index(['epoch_number', 'phase']).index.isin(
-        filtered_groups.set_index(['epoch_number', 'phase']).index)
-    filtered_df_buffers = df_buffers[mask].reset_index(drop=True)
-
-    columns_to_select = df_buffers.columns[:8].tolist() + ['epoch_number', 'timestamps', 'phase']
-    final_df_buffers = filtered_df_buffers[columns_to_select]
-
-    rename_dict = {old_name: new_name for old_name, new_name in zip(final_df_buffers.columns[:8], channel_names)}
-    final_df_buffers = final_df_buffers.rename(columns=rename_dict)
-
-    final_df_buffers.groupby(['epoch_number', 'phase']).size().reset_index(name='count')
-
-    # Creating epochs data
-    epochs_data = []
-    events = []
-
-    # Need to add rest:3, I have remove it temporarily as when I record for test I am not getting pure rest (250 s) signals.
-    # but if we run the psychopy iterations, we will have representation of rest state
-
-    event_id = {'forward': 1, 'reverse': 2}
-    phases = ['forward', 'reverse', 'rest']
-
-    for epoch_number, phase in final_df_buffers.groupby(['epoch_number', 'phase']):
-        phase_name = epoch_number[1]
-        if phase_name not in phases:
-            continue
-        epoch_data = phase[channel_names].values.T  # Transpose to get (n_channels, n_times)
-        epochs_data.append(epoch_data)
-        events.append([len(epochs_data) - 1, 0, event_id[phase_name]])
-
-    epochs_data = np.array(epochs_data)  # Shape should be (n_epochs, n_channels, n_times)
-    events = np.array(events)  # Shape should be (n_epochs, 3)
-
-
-    # Create MNE info structure
-    info = create_info(ch_names=channel_names, sfreq=config.device_details['sfreq'], ch_types='eeg')
-
-    # Create MNE Epochs object
-    epochs = EpochsArray(epochs_data, info, events, event_id=event_id, tmin=0)
-
-    X = epochs.get_data(copy=False)  # Shape: (n_epochs, n_channels, n_times)
-    y = epochs.events[:, 2]  # Shape: (n_epochs,)
-
-    # Reshape the data to (n_samples, n_features)
-    X = X.reshape(len(X), -1)
-
-    # Create and train a classifier
-    clf = make_pipeline(Vectorizer(), RandomForestClassifier(n_estimators=100))
-    clf.fit(X, y)
-
-    test_index = 0  # Use the first training data point for prediction
-    test_sample = X[test_index].reshape(1, -1)  # Reshape to (1, n_features)
-    predicted_label = clf.predict(test_sample)
-    actual_label = y[test_index]
-    print(f"Predicted label: {predicted_label[0]}, Actual label: {actual_label}")
+    # # load the task and signal files stored in the disk
+    # # Based on the task timestamps, subset the signals and annotate the events
+    # # create epoch data that includes the signal and events
+    # # use the epoch data to train a classifier
+    # # save the classifier model as a pickle file for prediction later
+    #
+    # # Load the .npz file for task
+    # file_path = 'processed_data/task_data/task_markers.npz'  # Replace with your file path
+    # df_tasks = load_task_markers(file_path)
+    #
+    # # Load the .npz file for buffer
+    # folder_path = 'processed_data/signal_data/'
+    # df_buffers = load_buffers(folder_path)
+    #
+    # print(df_buffers)
+    # print("Reading signals and markers from signals from disk...")
+    #
+    # df_buffers = df_buffers.sort_values('timestamps').reset_index(drop=True)
+    # df_tasks = df_tasks.sort_values('timestamps').reset_index(drop=True)
+    #
+    # # Perform an as of merge to find the closest earlier and later event_id
+    # df_buffers['prev_event_id'] = pd.merge_asof(df_buffers, df_tasks,
+    #                                             left_on='timestamps', right_on='timestamps',
+    #                                             direction='backward')['event_ids']
+    #
+    # df_buffers['next_event_id'] = pd.merge_asof(df_buffers, df_tasks,
+    #                                             left_on='timestamps', right_on='timestamps',
+    #                                             direction='forward')['event_ids']
+    #
+    # markers = {
+    #     'forward_start': [1],
+    #     'forward_end': [2],
+    #     'reverse_start': [3],
+    #     'reverse_end': [4],
+    #     'rest_start': [99],
+    #     'rest_end': [100],
+    #     'task_start': [-1],
+    #     'task_end': [-2]
+    # }
+    #
+    # def determine_phase(row):
+    #     if row['prev_event_id'] in markers['forward_start'] and row['next_event_id'] in markers['forward_end']:
+    #         return 'forward'
+    #     elif row['prev_event_id'] in markers['reverse_start'] and row['next_event_id'] in markers['reverse_end']:
+    #         return 'reverse'
+    #     elif row['prev_event_id'] in markers['rest_start'] and row['next_event_id'] in markers['rest_end']:
+    #         return 'rest'
+    #     else:
+    #         return 'unknown'
+    #
+    # df_buffers['phase'] = df_buffers.apply(determine_phase, axis=1)
+    #
+    # grouped = df_buffers.groupby(['epoch_number', 'phase']).size().reset_index(name='count')
+    #
+    # sfreq = config.device_details['sfreq']
+    # buffer_duration = config.epoch_information['duration']
+    #
+    # valid_phases = ['forward', 'reverse', 'rest']
+    #
+    # # filtering out only phases that have sampling rate number of signals (125 rows in case of unicorn black)
+    # # we can only use the epochs where the full length is of a particular phase, else we reject them for now
+    # # this can be improved later, this leads to some loss of information as phases something change within an epoch
+    #
+    # # a high priority item to be changed here:
+    # # lets take an example of a command "reverse", currently the signals associated with this action could be split across 3 epochs. (5, 125, 125)
+    # # we are currently dropping the first epoch as its not a complete signal. However, the second 125 and third 125 only have partial information about the signal,
+    # # In an ideal scenario, the relevant signals (across all three epochs) should be combined and marked as "reverse" for appropriate classification
+    # # This is tricky because we will end up with varying signal sizes for actions. we might have to do some stretching to standardize it before classification
+    #
+    # filtered_groups = grouped[(grouped['phase'].isin(valid_phases)) & (grouped['count'] == sfreq * buffer_duration)]
+    # mask = df_buffers.set_index(['epoch_number', 'phase']).index.isin(
+    #     filtered_groups.set_index(['epoch_number', 'phase']).index)
+    # filtered_df_buffers = df_buffers[mask].reset_index(drop=True)
+    #
+    # val_sel_columns = config.device_details['relevant_channels_from_device']
+    # columns_to_select = df_buffers.columns[:val_sel_columns].tolist() + ['epoch_number', 'timestamps', 'phase']
+    # final_df_buffers = filtered_df_buffers[columns_to_select]
+    #
+    # rename_dict = {old_name: new_name for old_name, new_name in zip(final_df_buffers.columns[:val_sel_columns], channel_names)}
+    # final_df_buffers = final_df_buffers.rename(columns=rename_dict)
+    #
+    # final_df_buffers.groupby(['epoch_number', 'phase']).size().reset_index(name='count')
+    # # Logic to assign identifiers to consecutive phases
+    # final_df_buffers['phase_id'] = (final_df_buffers['phase'] != final_df_buffers['phase'].shift()).cumsum()
+    #
+    # # Creating epochs data
+    # epochs_data = []
+    # events = []
+    #
+    # event_id = {'forward': 1, 'reverse': 2, 'rest': 3}
+    # phases = ['forward', 'reverse', 'rest']
+    #
+    # for phase in final_df_buffers.groupby(['phase_id']):
+    #     epoch_data = phase[channel_names].values.T
+    #     epochs_data.append(epoch_data)
+    #     # events.append([len(epochs_data) - 1, 0, event_id[phase_id]])
+    #
+    # # change this based on previous comment
+    # # for epoch_number, phase in final_df_buffers.groupby(['epoch_number', 'phase']):
+    # #     # Excluding 'rest' phase for now. As it can be added as a baseline measurement as part of the experiment later
+    # #     phase_name = epoch_number[1]
+    # #     if phase_name not in phases:
+    # #         continue
+    # #     epoch_data = phase[channel_names].values.T  # Transpose to get (n_channels, n_times)
+    # #     epochs_data.append(epoch_data)
+    # #     events.append([len(epochs_data) - 1, 0, event_id[phase_name]])
+    #
+    # # this is where the modification should end
+    #
+    # epochs_data = np.array(epochs_data)  # Shape should be (n_epochs, n_channels, n_times)
+    # events = np.array(events)  # Shape should be (n_epochs, 3)
+    #
+    #
+    # # Create MNE info structure
+    # info = create_info(ch_names=channel_names, sfreq=config.device_details['sfreq'], ch_types='eeg')
+    #
+    # # Create MNE Epochs object
+    # epochs = EpochsArray(epochs_data, info, events, event_id=event_id, tmin=0)
+    #
+    # X = epochs.get_data(copy=False)  # Shape: (n_epochs, n_channels, n_times)
+    # y = epochs.events[:, 2]  # Shape: (n_epochs,)
+    #
+    # # Reshape the data to (n_samples, n_features)
+    # X = X.reshape(len(X), -1)
+    #
+    # # Create and train a classifier
+    # clf = make_pipeline(Vectorizer(), RandomForestClassifier(n_estimators=100))
+    # clf.fit(X, y)
+    #
+    # test_index = 0  # Use the first training data point for prediction
+    # test_sample = X[test_index].reshape(1, -1)  # Reshape to (1, n_features)
+    # predicted_label = clf.predict(test_sample)
+    # actual_label = y[test_index]
+    # print(f"Predicted label: {predicted_label[0]}, Actual label: {actual_label}")
 
 
 def classify_eyeblinks(df_buffer, channel_names):
