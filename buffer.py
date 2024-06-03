@@ -3,10 +3,10 @@ import pandas as pd
 import config
 import time
 import os
-
+from datetime import datetime
 
 class Buffer:
-    def __init__(self, duration, sampling_rate, num_channels):
+    def __init__(self, duration, sampling_rate, num_channels, save_path):
         self.electrodes = config.device_details['relevant_channels_from_device']
         self.duration = duration
         self.num_channels = num_channels
@@ -16,7 +16,7 @@ class Buffer:
         self.markers = np.array([])
         self.timestamps = np.zeros(self.buffer_size)
         self.current_size = 0  # Track the current number of samples in the buffer
-        self.save_path = "processed_data/signal_data"
+        self.save_path = save_path
 
         # Ensure the save path exists
         os.makedirs(self.save_path, exist_ok=True)

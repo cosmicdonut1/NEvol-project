@@ -88,7 +88,7 @@ def write_parameters(is_moving, is_rotating_left, is_rotating_right):
         f.write(f"{is_moving},{is_rotating_left},{is_rotating_right}")
 
 
-def process_imagery_data(channel_names):
+# def process_imagery_data(channel_names):
 
     # Work in Progress - Replace from epoching_logic.ipynb
 

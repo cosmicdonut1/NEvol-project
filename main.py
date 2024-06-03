@@ -3,11 +3,13 @@ from threading import Thread, Event
 from buffer import Buffer
 from lsl_manager import *
 
+from datetime import datetime
 import time
 import numpy as np
 # import pandas as pd
 from plot import plotEEGData
-from analyze import analyze_bandpower, classify_eyeblinks, process_imagery_data
+from analyze import analyze_bandpower, classify_eyeblinks
+
 # import task
 
 from utils import clear_data_dumps
@@ -27,11 +29,26 @@ if __name__ == "__main__":
     all_channels = config.device_details['total_channels_from_device']
     device_id = config.device_details['id']
 
+    base_path = "processed_data"
+
+    if config.task_details['overwrite_recorded_data']:
+        clear_data_dumps(base_path)
+
+    current_time_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    new_folder_path = os.path.join(base_path, config.task_details['task'], current_time_str)
+    task_path = os.path.join(new_folder_path, 'task_data')
+    signal_path = os.path.join(new_folder_path, 'signal_data')
+    os.makedirs(task_path, exist_ok=True)
+    os.makedirs(signal_path, exist_ok=True)
+
     # ls_markers = []
     # eeg_signals = np.zeros((len(channel_names), epoch_duration * sampling_rate))
 
     # Create an empty buffer for storage
-    buffer = Buffer(duration=epoch_duration, sampling_rate=sampling_rate, num_channels=all_channels)
+    buffer = Buffer(duration=epoch_duration,
+                    sampling_rate=sampling_rate,
+                    num_channels=all_channels,
+                    save_path=signal_path)
     buffer.print_buffer_shape()
 
     stop_event = Event()
@@ -74,21 +91,19 @@ if __name__ == "__main__":
                 ls_markers = []
                 eeg_signals = np.zeros((len(channel_names), epoch_duration * sampling_rate))
 
-                clear_data_dumps("processed_data")
-
                 info = {'start_time': time.time()}
 
                 signal_thread = Thread(target=read_signal_stream, args=(device_id, buffer, stop_event))
                 signal_thread.start()
 
-                read_task_thread = Thread(target=read_task_stream, args=("task_stream", ls_markers))
+                read_task_thread = Thread(target=read_task_stream, args=("task_stream", ls_markers, task_path))
                 read_task_thread.start()
                 read_task_thread.join()
                 stop_event.set()
 
                 info['end_time'] = time.time()
 
-                print("Task Ended. Now preprocessing...")
+                # print("Preprocessing started...")
                 # process_imagery_data(channel_names)
 
         elif config.task_details['mode'] == "predict":

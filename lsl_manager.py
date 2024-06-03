@@ -33,7 +33,7 @@ def check_stream(device_name):
         time.sleep(3)
 
 
-def read_task_stream(task_stream_name, ls_task_markers):
+def read_task_stream(task_stream_name, ls_task_markers, save_path):
     task_stream = resolve_stream("name", task_stream_name)
     inlet_task = StreamInlet(task_stream[0])
     try:
@@ -52,10 +52,10 @@ def read_task_stream(task_stream_name, ls_task_markers):
                 event_ids, timestamps = zip(*ls_task_markers)
                 event_ids = np.array(event_ids)
                 timestamps = np.array(timestamps)
-
+                filename = os.path.join(save_path, f"task_markers.npz")
                 # Save to a .npz file
-                np.savez('processed_data/task_data/task_markers.npz', event_ids=event_ids, timestamps=timestamps)
-                print("Markers saved to processed_data/task_data/task_markers.npz")
+                np.savez(filename, event_ids=event_ids, timestamps=timestamps)
+                print("Markers saved to ", filename)
                 break
 
     except Exception as e:
@@ -87,5 +87,5 @@ def read_signal_stream(device_name, buffer, stop_event, save_path="processed_dat
         print(f"Signal stream encountered an error: {e}")
 
     finally:
-        print("closing signal_stream")
+        print("Closing Signal Stream")
         inlet_signal.close_stream()

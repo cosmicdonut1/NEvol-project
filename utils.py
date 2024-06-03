@@ -85,7 +85,7 @@ def load_buffers(folder_path):
         if file_name.endswith('.npz'):
             file_path = os.path.join(folder_path, file_name)
             df = process_npz_file(file_path)
-            df['epoch_number'] = index
+            df['part_number'] = index
             index += 1
             dfs.append(df)
 
