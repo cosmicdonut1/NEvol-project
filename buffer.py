@@ -5,6 +5,7 @@ import time
 import os
 from datetime import datetime
 
+
 class Buffer:
     def __init__(self, duration, sampling_rate, num_channels, save_path):
         self.electrodes = config.device_details['relevant_channels_from_device']

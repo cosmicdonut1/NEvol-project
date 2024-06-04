@@ -23,7 +23,7 @@ task_details = dict(
 
 # Kseniia's OpenBCI
 # device_details = dict(
-#     id="UN-2023.04.61",
+#     id="openbci_eeg",
 #     sfreq=125,
 #     total_channels_from_device = 17,
 #     relevant_channels_from_device = 17,
