@@ -75,11 +75,18 @@ if __name__ == "__main__":
         signal_thread = Thread(target=read_signal_stream, args=(device_id, buffer, stop_event))
         signal_thread.start()
 
+        signal_type = "baseline"
+        ls_rel_channels = ['Fz', 'Cz', 'Pz']
+        ls_rel_bands = ['theta', 'alpha', 'beta']
+
         while True:
             df_buffer = buffer.get_plottable_data(channel_names)
             print(df_buffer)
             if df_buffer[channel_names].to_numpy().any():
-                analyze_bandpower(df_buffer, channel_names, )
+                df_bandpower = analyze_bandpower(df_buffer, channel_names, signal_type, ls_rel_channels, ls_rel_bands)
+                print("------------------------------------------")
+                print(df_bandpower)
+                print("------------------------------------------")
             time.sleep(epoch_duration)
 
     if config.task_details['task'] == "motor_imagery":

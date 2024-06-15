@@ -22,18 +22,18 @@ is_moving = False
 is_rotating_left = False
 is_rotating_right = False
 
-def create_power_table(spectrum, band_name, channel_names, reference_channels):
+# def create_power_table(spectrum, band_name, channel_names, reference_channels):
+#
+#     # Taking first 8 electrodes, change this for OpenBCI device
+#     ls_spectrum = spectrum.get_data().reshape(4, 8)
+#     df = pd.DataFrame(ls_spectrum, columns=[f'Channel_{i}' for i in range(1, len(channel_names)+1)])
+#     df.columns = channel_names
+#     print(band_name, "\n")
+#     print("Average ", reference_channels[0], ": ", df[reference_channels[0]].mean(), "\nAverage ", reference_channels[1], ": ", df[reference_channels[1]].mean(), "\nAverage ",reference_channels[2], ":", df[reference_channels[2]].mean())
+#     print("--------------------------------------------------------------------------")
 
-    # Taking first 8 electrodes, change this for OpenBCI device
-    ls_spectrum = spectrum.get_data().reshape(4, 8)
-    df = pd.DataFrame(ls_spectrum, columns=[f'Channel_{i}' for i in range(1, len(channel_names)+1)])
-    df.columns = channel_names
-    print(band_name, "\n")
-    print("Average ", reference_channels[0], ": ", df[reference_channels[0]].mean(), "\nAverage ", reference_channels[1], ": ", df[reference_channels[1]].mean(), "\nAverage ",reference_channels[2], ":", df[reference_channels[2]].mean())
-    print("--------------------------------------------------------------------------")
 
-
-def analyze_bandpower(df_buffer, channel_names):
+def analyze_bandpower(df_buffer, channel_names, signal_type, ls_rel_channels, ls_rel_bands):
 
     # Clear plot
     plt.clf()
@@ -45,42 +45,39 @@ def analyze_bandpower(df_buffer, channel_names):
     info = mne.create_info(
         ch_names=channel_names,
         sfreq=config.device_details['sfreq'],  # Assuming the data is sampled at 1 Hz; adjust as necessary
-        ch_types=['eeg'] * len(channel_names)
+        ch_types=['eeg'] * 8
     )
 
-    # Create Raw object
-    raw = mne.io.RawArray(channel_data, info)
+    raw = mne.io.RawArray(channel_data * 1e-6, info, verbose=None)
     raw.set_montage('standard_1005')
 
-    # raw.compute_psd()
+    freq_bands = {
+        'delta': (1, 4),
+        'theta': (4, 8),
+        'alpha': (8, 12),
+        'beta': (12, 30),
+        'gamma': (30, 100),
+    }
 
-    # Bandpass filter for theta and alpha bands
-    theta_band = (4, 7)
-    alpha_band = (8, 13)
+    df_bandpower = pd.DataFrame(columns=channel_names)
+    df_bandpower['bandpower'] = ""
 
-    # Epoching the data
-    epochs = mne.make_fixed_length_epochs(raw, duration=0.5, overlap=0.0, preload=True)
+    bandpower_epoch_duration = 0.5
+    epochs = mne.make_fixed_length_epochs(raw, duration=bandpower_epoch_duration, overlap=0.0, preload=True)
+    # df_bandpower = pd.DataFrame(columns=ls_rel_channels, index=ls_rel_bands)
 
-    # Compute PSD for epochs
-    # psds, freqs = mne.time_frequency.psd_welch(epochs, fmin=2, fmax=30, n_fft=256)
+    # psd, freqs = epochs.compute_psd(method='multitaper', fmin=fmin, fmax=fmax, tmin=0, tmax=None).get_data(return_freqs=True)
 
-    theta_spectrum = epochs.compute_psd(method='multitaper', fmin=theta_band[0], fmax=theta_band[1], tmin=0, tmax=2)
-    # theta_spectrum.plot()
+    for idx, band in enumerate(ls_rel_bands):
+        spectrum = epochs.compute_psd(method='multitaper', fmin=freq_bands[band][0], fmax=freq_bands[band][1], tmin=0, tmax=None)
+        psd = spectrum.get_data().reshape(int(config.epoch_information['duration']/bandpower_epoch_duration),
+                                          len(channel_names), -1)
+        mean_psd = psd.reshape(8, -1).mean(axis=1)
+        row = list(mean_psd) + [band]
+        df_bandpower.loc[idx] = row
 
-    alpha_spectrum = epochs.compute_psd(method='multitaper', fmin=theta_band[0], fmax=theta_band[1], tmin=0, tmax=2)
-    # alpha_spectrum.plot()
-
-    # Define the electrode names you want to include in the table
-    # electrode_names = ['Fz', 'Pz', 'Cz']
-
-    # Create tables for theta and alpha bands
-    create_power_table(theta_spectrum, 'theta', channel_names, config.task_details['bandpower_reference_channels'])
-    create_power_table(alpha_spectrum, 'alpha', channel_names, config.task_details['bandpower_reference_channels'])
-
-    # theta_spectrum, alpha_spectrum are of the shape (4,8,1) (epochs, electrodes, _)
-    # write a for loop on theta and derived a table with columns (Epoch_number, band = theta, Fz, Pz and Cz), the table should contain values from theta_spectrum
-
-    # -------------
+    rel_columns = ['bandpower'] + ls_rel_channels
+    return df_bandpower[rel_columns]
 
 
 def write_parameters(is_moving, is_rotating_left, is_rotating_right):
@@ -287,6 +284,7 @@ def classify_eyeblinks(df_buffer, channel_names):
     write_parameters(is_moving, is_rotating_left, is_rotating_right)
 
     ### --- END OF SENDING THE COMMAND TO CONTROL VISUALISATION --- ###
+
     eog_events_df = pd.DataFrame(eog_events, columns=['sample', 'prev_event_id', 'event_id'])
 
     # Step 4: Visualize raw and filtered data with detected blinks
