@@ -1,16 +1,22 @@
 from threading import Thread, Event
 
 from buffer import Buffer
+from bufferManager import BufferManager
+
 from lsl_manager import *
 
 from datetime import datetime
 import time
 import numpy as np
 # import pandas as pd
-from plot import plotEEGData
+from plot import MainWindow
+from PyQt5.QtWidgets import QApplication
+
 from analyze import analyze_bandpower, classify_eyeblinks
 
 # import task
+
+import sys
 
 from utils import clear_data_dumps
 import config
@@ -44,11 +50,15 @@ if __name__ == "__main__":
     # ls_markers = []
     # eeg_signals = np.zeros((len(channel_names), epoch_duration * sampling_rate))
 
+    buffer_manager = BufferManager()
+
     # Create an empty buffer for storage
     buffer = Buffer(duration=epoch_duration,
                     sampling_rate=sampling_rate,
                     num_channels=all_channels,
-                    save_path=signal_path)
+                    save_path=signal_path,
+                    buffer_manager=buffer_manager)
+    print("Creating new buffer instance...")
     buffer.print_buffer_shape()
 
     stop_event = Event()
@@ -75,19 +85,46 @@ if __name__ == "__main__":
         signal_thread = Thread(target=read_signal_stream, args=(device_id, buffer, stop_event))
         signal_thread.start()
 
-        signal_type = "baseline"
-        ls_rel_channels = ['Fz', 'Cz', 'Pz']
-        ls_rel_bands = ['theta', 'alpha', 'beta']
+        # signal_type = "baseline"
+        # ls_rel_channels = ['Fz', 'Cz', 'Pz', 'Oz']
+        # ls_rel_bands = ['theta', 'alpha', 'beta']
 
-        while True:
-            df_buffer = buffer.get_plottable_data(channel_names)
-            print(df_buffer)
-            if df_buffer[channel_names].to_numpy().any():
-                df_bandpower = analyze_bandpower(df_buffer, channel_names, signal_type, ls_rel_channels, ls_rel_bands)
-                print("------------------------------------------")
-                print(df_bandpower)
-                print("------------------------------------------")
-            time.sleep(epoch_duration)
+        time.sleep(2)
+
+
+        # while True:
+        #     df_buffer = buffer.get_plottable_data(channel_names)
+        #     print(df_buffer)
+        #     if df_buffer[channel_names].to_numpy().any():
+        #         df_bandpower = analyze_bandpower(df_buffer, channel_names, signal_type, ls_rel_channels, ls_rel_bands)
+        #         print("------------------------------------------")
+        #         print(df_bandpower)
+        #         print("------------------------------------------")
+        #     time.sleep(epoch_duration)
+
+    #         Engagement Index - Decide on the definition [Beta/(theta+alpha)]
+    #         Plot Engagement Index over time
+    #         See if you can visualize brain topomap over time
+    # -------------------------------------------------------------------
+    #         High Workload/ Low workload:
+    #          - Baseline Task (High 10 (aptitude test) / Low 1 (closed eye, relaxed) --> Low, High)
+    #         Output : High, Mid, Low
+
+    #         Select the time duration of the buffer that works best (based on subjective experience)
+
+    #         Pacman - increase the number of opponent / speed
+    #         music - computer generated (three tracks with different bpm)
+    #
+    #         Outcome
+    #         -Increase engagement -> low (unloaded) -> mid <- high (overloaded)
+    #
+    #
+    #         Integration of both
+
+    #         Documentation
+
+
+
 
     if config.task_details['task'] == "motor_imagery":
         print("Executing Motor Imagery | Mode = ", config.task_details['mode'])
@@ -114,7 +151,30 @@ if __name__ == "__main__":
                 # process_imagery_data(channel_names)
 
         elif config.task_details['mode'] == "predict":
-            pass
+            info = {'start_time': time.time()}
+
+            signal_thread = Thread(target=read_signal_stream, args=(device_id, buffer, stop_event))
+            signal_thread.start()
+
+            print("Waiting 2 seconds for buffer to be fully initialized...")
+            time.sleep(epoch_duration+1)
+
+            print("Initiating plots in a new window...")
+            app = QApplication(sys.argv)
+            mainWindow = MainWindow(buffer_manager=buffer_manager, current_buffer=buffer)
+            mainWindow.show()
+            sys.exit(app.exec_())
+            # time.sleep(epoch_duration)
+
+
+
+
+                # (500,8)
+                # buffer_manager.get_all_buffers()[0].get_buffer_data()[:, :8].shape
+
+                # (500,)
+                # buffer_manager.get_all_buffers()[0].get_buffer_timestamps().shape
+
 
     else:
         print("Task or Mode invalid! Please check documentation")

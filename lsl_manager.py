@@ -5,6 +5,7 @@ import json
 import os
 import numpy as np
 # from utils import lsl_to_datetime
+from datetime import datetime
 
 ls_active_streams = []
 # markers = []
@@ -74,6 +75,11 @@ def read_signal_stream(device_name, buffer, stop_event, save_path="processed_dat
     try:
         while not stop_event.is_set():
             sample, timestamp_signal = inlet_signal.pull_sample()
+
+            # What if we used datetime instead
+            # This will create a small-time lag | use with caution
+            # The only reason this is being tried is that plots need specific datetime format
+            # timestamp_signal = datetime.now()
 
             # To get a new chunk
             # sample, timestamp = inlet.pull_chunk()

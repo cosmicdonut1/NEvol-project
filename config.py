@@ -15,9 +15,9 @@ task_details = dict(
     task="motor_imagery",
     # task="eyeblink",
     # task="bandpower",
-    bandpower_reference_channels=['Fz', 'Cz', 'Pz'],
+    bandpower_reference_channels=['Fz', 'Cz', 'Pz', 'Oz'],
     eyeblink_eog_channel='Fz',
-    mode="train",
+    mode="predict",
     overwrite_recorded_data=False
 )
 

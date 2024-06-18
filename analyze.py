@@ -36,8 +36,8 @@ is_rotating_right = False
 def analyze_bandpower(df_buffer, channel_names, signal_type, ls_rel_channels, ls_rel_bands):
 
     # Clear plot
-    plt.clf()
-    plt.close('all')
+    # plt.clf()
+    # plt.close('all')
 
     channel_data = df_buffer.iloc[:, :-1].values.T
     timestamps = pd.to_datetime(df_buffer['timestamp'])

@@ -4,10 +4,11 @@ import config
 import time
 import os
 from datetime import datetime
+from bufferManager import BufferManager
 
 
 class Buffer:
-    def __init__(self, duration, sampling_rate, num_channels, save_path):
+    def __init__(self, duration, sampling_rate, num_channels, save_path, buffer_manager):
         self.electrodes = config.device_details['relevant_channels_from_device']
         self.duration = duration
         self.num_channels = num_channels
@@ -18,9 +19,13 @@ class Buffer:
         self.timestamps = np.zeros(self.buffer_size)
         self.current_size = 0  # Track the current number of samples in the buffer
         self.save_path = save_path
+        self.buffers = buffer_manager
 
         # Ensure the save path exists
         os.makedirs(self.save_path, exist_ok=True)
+
+    # def __repr__(self):
+    #     return "Buffer Object with size : {}".format(self.buffer_size)
 
     def add_sample(self, sample, timestamp):
         if self.current_size < self.buffer_size:
@@ -31,16 +36,19 @@ class Buffer:
             # Save and clear the buffer when full
             current_time = time.time()
             filename = os.path.join(self.save_path, f"buffer_{int(current_time)}.npz")
-            self.save_buffer(filename)
+
+            self.buffers.add_buffer(self)
+            self.save_buffer_to_disk(filename)
             self.clear_buffer()
+
             # Add the new sample after clearing
             self.buffer[0] = sample
             self.timestamps[0] = timestamp
             self.current_size = 1
 
-    def save_buffer(self, filename):
+    def save_buffer_to_disk(self, filename):
         np.savez(filename, buffer=self.buffer, timestamps=self.timestamps)
-        self.print_buffer_shape()
+        # self.print_buffer_shape()
         print(f"Session Buffer saved to disk! Duration = ", self.timestamps[0], " to ", self.timestamps[-1])
 
     def clear_buffer(self):
@@ -72,5 +80,4 @@ class Buffer:
         print(self.buffer)
 
     def print_buffer_shape(self):
-        print("Buffer shape:")
-        print(self.buffer.shape)
+        print("Buffer shape: ", self.buffer.shape)
