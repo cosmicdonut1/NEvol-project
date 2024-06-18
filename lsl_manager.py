@@ -56,7 +56,7 @@ def read_task_stream(task_stream_name, ls_task_markers, save_path):
                 filename = os.path.join(save_path, f"task_markers.npz")
                 # Save to a .npz file
                 np.savez(filename, event_ids=event_ids, timestamps=timestamps)
-                print("Markers saved to ", filename)
+                print("Event markers saved to ", filename)
                 break
 
     except Exception as e:

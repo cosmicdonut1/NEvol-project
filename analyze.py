@@ -235,10 +235,8 @@ def classify_eyeblinks(df_buffer, channel_names):
 
     info = mne.create_info(
         ch_names=channel_names,
-        sfreq=125.0,  # Assuming the data is sampled at 1 Hz; adjust as necessary
-
-        # change this for different electrode configuration
-        ch_types=['eeg'] * len(channel_names)
+        sfreq=config.device_details['sfreq'],  # Assuming the data is sampled at 1 Hz; adjust as necessary
+        ch_types=['eeg'] * 8
     )
 
     # Create Raw object
