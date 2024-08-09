@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QApplication
 
 from analyze import analyze_bandpower, classify_eyeblinks
 
-# import task
+import task
 
 import sys
 
@@ -123,11 +123,12 @@ if __name__ == "__main__":
             print("Waiting 2 seconds for buffer to be fully initialized...")
             time.sleep(epoch_duration+1)
 
-            print("Initiating plots in a new window...")
-            app = QApplication(sys.argv)
-            mainWindow = MainWindow(buffer_manager=buffer_manager, current_buffer=buffer)
-            mainWindow.show()
-            sys.exit(app.exec_())
+            # Disabled plotting mechanism
+            # print("Initiating plots in a new window...")
+            # app = QApplication(sys.argv)
+            # mainWindow = MainWindow(buffer_manager=buffer_manager, current_buffer=buffer)
+            # mainWindow.show()
+            # sys.exit(app.exec_())
 
     else:
         print("Task or Mode invalid! Please check documentation")

@@ -9,6 +9,7 @@ Python package in your environment, run `python task.py` in command line.
 """
 from psychopy import core, visual, event
 from pylsl import StreamInfo, StreamOutlet
+import time
 
 
 def execute_train_task(mode="motor_imagery", iterations=6):
@@ -42,33 +43,73 @@ def execute_train_task(mode="motor_imagery", iterations=6):
         right = visual.TextStim(win, text="imagine right", color='red')
         wait = visual.TextStim(win, text="rest", color='black')
 
+        # Start the task and send the start marker.
         outlet.push_sample(markers['task_start'])
-        wait.draw()
-        core.wait(1.5)
-        win.flip()
-        for i in range(iterations):
-            if not i % 2:
-                outlet.push_sample(markers['left_start'])
-                left.draw()
-                # # Experiment with win.callOnFlip method. See Psychopy window docs.
-                win.callOnFlip(outlet.push_sample, markers['left_end'])
-                # win.flip()
-                # outlet.push_sample(markers['left_end'])
-            else:
-                outlet.push_sample(markers['right_start'])
-                right.draw()
-                # # Experiment with win.callOnFlip method. See Psychopy window docs.
-                win.callOnFlip(outlet.push_sample, markers['right_end'])
-                # win.flip()
-                # outlet.push_sample(markers['right_end'])
-            if 'escape' in event.getKeys():  # Exit if user presses escape.
-                break
-            core.wait(1.5)  # Display text for 1.0 second.
+        time_start = time.time()
+        print(f"Task started at: {time_start}")
+
+        for i in range(iterations // 2):
+            # Display "left" and record markers.
+            outlet.push_sample(markers['left_start'])
+            left.draw()
             win.flip()
+            time_left_start = time.time()
+            print(f"Left start at: {time_left_start}")
+
+            core.wait(3)  # Show for 3 seconds.
+
+            outlet.push_sample(markers['left_end'])
+            win.flip()
+            time_left_end = time.time()
+            print(f"Left end at: {time_left_end}")
+
+            # Display "rest" and record markers.
             outlet.push_sample(markers['rest_start'])
-            core.wait(1)  # ISI of 0.5 seconds.
+            wait.draw()
+            win.flip()
+            time_rest_start = time.time()
+            print(f"Rest start at: {time_rest_start}")
+
+            core.wait(1)  # Show for 1 second.
+
             outlet.push_sample(markers['rest_end'])
+            win.flip()
+            time_rest_end = time.time()
+            print(f"Rest end at: {time_rest_end}")
+
+            # Display "right" and record markers.
+            outlet.push_sample(markers['right_start'])
+            right.draw()
+            win.flip()
+            time_right_start = time.time()
+            print(f"Right start at: {time_right_start}")
+
+            core.wait(3)  # Show for 3 seconds.
+
+            outlet.push_sample(markers['right_end'])
+            win.flip()
+            time_right_end = time.time()
+            print(f"Right end at: {time_right_end}")
+
+            # Display "rest" again and record markers.
+            outlet.push_sample(markers['rest_start'])
+            wait.draw()
+            win.flip()
+            time_rest_start_2 = time.time()
+            print(f"Rest start (2) at: {time_rest_start_2}")
+
+            core.wait(1)  # Show for 1 second.
+
+            outlet.push_sample(markers['rest_end'])
+            win.flip()
+            time_rest_end_2 = time.time()
+            print(f"Rest end (2) at: {time_rest_end_2}")
+
+        # End the task and send the end marker.
         outlet.push_sample(markers['task_end'])
+        time_end = time.time()
+        print(f"Task ended at: {time_end}")
+
         win.close()
         core.quit()
 
